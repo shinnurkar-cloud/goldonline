@@ -70,6 +70,8 @@ export default function GoldenEyePage() {
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
   
   const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [forgotPasswordUsername, setForgotPasswordUsername] = useState("");
+
 
   const currentPrice = priceHistory[0]?.price ?? 0;
 
@@ -160,8 +162,10 @@ export default function GoldenEyePage() {
   const handleChangePassword = (e: FormEvent) => {
     e.preventDefault();
     
-    const targetAdmin = username === 'admin' || isLoggedIn ? 'admin' : 'admin2';
-    const currentPassword = targetAdmin === 'admin' ? adminPassword : admin2Password;
+    // Determine which admin we're dealing with
+    const activeAdmin = isLoggedIn ? 'admin' : (isLoggedInAdmin2 ? 'admin2' : forgotPasswordUsername);
+    const currentPassword = activeAdmin === 'admin' ? adminPassword : admin2Password;
+    const setPasswordFunc = activeAdmin === 'admin' ? setAdminPassword : setAdmin2Password;
 
     if (oldPassword !== currentPassword && oldPassword !== masterPassword) {
       toast({
@@ -190,26 +194,24 @@ export default function GoldenEyePage() {
       return;
     }
     
-    if (isLoggedIn) {
-        setAdminPassword(newPassword);
-    } else if (isLoggedInAdmin2) {
-        setAdmin2Password(newPassword);
-    } else if (authView === 'forgot_password') {
-        // When resetting from forgot password, we need to know which admin to reset
-        // For simplicity, this will reset the main admin password
-        setAdminPassword(newPassword);
-    }
-
+    setPasswordFunc(newPassword);
 
     setOldPassword("");
     setNewPassword("");
     setConfirmNewPassword("");
     setShowPasswordChange(false);
-    setAuthView('login'); // Go back to login view after successful password change
-    toast({
-      title: "Success",
-      description: "Your password has been changed. Please log in.",
-    });
+    if (authView === 'forgot_password') {
+      setAuthView('login'); // Go back to login view after successful password change
+       toast({
+        title: "Success",
+        description: `Password for ${activeAdmin} has been changed. Please log in.`,
+      });
+    } else {
+       toast({
+        title: "Success",
+        description: "Your password has been changed.",
+      });
+    }
   };
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>, index: number) => {
@@ -246,7 +248,7 @@ export default function GoldenEyePage() {
                 <LogOut className="mr-2 h-4 w-4" /> Logout
               </Button>
             </div>
-            <CardDescription>Manage image slides</CardDescription>
+            <CardDescription>Manage image slides and account settings</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
             <div className="space-y-4 p-4 border rounded-lg bg-background/50">
@@ -263,6 +265,34 @@ export default function GoldenEyePage() {
                         />
                     </div>
                 ))}
+            </div>
+             <Separator />
+
+            <div>
+              <Button variant="outline" className="w-full" onClick={() => setShowPasswordChange(!showPasswordChange)}>
+                <KeyRound className="mr-2 h-4 w-4" /> Change Password
+              </Button>
+            
+              {showPasswordChange && (
+                <form onSubmit={handleChangePassword} className="mt-4 space-y-4 p-4 border rounded-lg bg-background/50">
+                   <h3 className="font-semibold text-secondary">Change Admin2 Password</h3>
+                  <div className="space-y-2">
+                    <Label htmlFor="oldPassword">Old or Master Password</Label>
+                    <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required  className="bg-accent/50" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="bg-accent/50" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+                    <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} required className="bg-accent/50" />
+                  </div>
+                  <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground">
+                    <Save className="mr-2 h-4 w-4" /> Save New Password
+                  </Button>
+                </form>
+              )}
             </div>
         </CardContent>
       </>
@@ -339,16 +369,20 @@ export default function GoldenEyePage() {
           <form onSubmit={handleChangePassword}>
             <CardHeader>
               <CardTitle className="text-2xl font-headline text-primary">Reset Password</CardTitle>
-              <CardDescription>Reset admin password using the master key.</CardDescription>
+              <CardDescription>Reset password using the master key.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="forgotPasswordUsername">Username</Label>
+                <Input id="forgotPasswordUsername" value={forgotPasswordUsername} onChange={(e) => setForgotPasswordUsername(e.target.value)} placeholder="admin or admin2" required className="bg-accent/50" />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="oldPassword">Master Password</Label>
                 <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required  className="bg-accent/50" />
                  <p className="text-xs text-muted-foreground flex items-center gap-1.5"><AlertCircle className="h-3 w-3"/>The default master password is: <code className="font-mono bg-muted text-muted-foreground px-1 py-0.5 rounded">{masterPassword}</code></p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="newPassword">New Admin Password</Label>
+                <Label htmlFor="newPassword">New Password</Label>
                 <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="bg-accent/50" />
               </div>
               <div className="space-y-2">
