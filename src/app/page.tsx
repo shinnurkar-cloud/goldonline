@@ -30,6 +30,8 @@ interface PriceUpdate {
   date: Date;
 }
 
+type AuthView = 'login' | 'forgot_password';
+
 export default function GoldenEyePage() {
   const { toast } = useToast();
 
@@ -43,6 +45,7 @@ export default function GoldenEyePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [adminPassword, setAdminPassword] = useState("password123");
   const masterPassword = "gold123";
+  const [authView, setAuthView] = useState<AuthView>('login');
 
   // Form states
   const [username, setUsername] = useState("");
@@ -83,6 +86,7 @@ export default function GoldenEyePage() {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setShowPasswordChange(false);
+    setAuthView('login');
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out.",
@@ -115,7 +119,7 @@ export default function GoldenEyePage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Old password is incorrect.",
+        description: "Old or Master password is incorrect.",
       });
       return;
     }
@@ -143,18 +147,150 @@ export default function GoldenEyePage() {
     setNewPassword("");
     setConfirmNewPassword("");
     setShowPasswordChange(false);
+    setAuthView('login'); // Go back to login view after successful password change
     toast({
       title: "Success",
-      description: "Your password has been changed.",
+      description: "Your password has been changed. Please log in.",
     });
   };
-
+  
   const currentPrice = priceHistory[0]?.price ?? 0;
   const lastUpdated = priceHistory[0]?.date ?? null;
   const recentUpdates = priceHistory.slice(0, 6); // Get last 6 to show 5 changes
 
   if (!isMounted) {
     return null; // Or a loading skeleton
+  }
+
+  const renderAuthCard = () => {
+    if (isLoggedIn) {
+      return (
+        <>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-2xl font-headline text-primary">Admin Panel</CardTitle>
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="hover:bg-accent">
+                <LogOut className="mr-2 h-4 w-4" /> Logout
+              </Button>
+            </div>
+            <CardDescription>Update price and manage settings</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <form onSubmit={handlePriceUpdate} className="space-y-4 p-4 border rounded-lg bg-background/50">
+               <h3 className="font-semibold text-secondary">Update Gold Price</h3>
+               <div className="space-y-2">
+                <Label htmlFor="newPrice">New Price (per 10g)</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">₹</span>
+                  <Input id="newPrice" type="number" step="0.01" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} placeholder="e.g., 73000.00" required className="pl-8 bg-accent/50" />
+                </div>
+              </div>
+              <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground">
+                <Save className="mr-2 h-4 w-4" /> Update Price
+              </Button>
+            </form>
+
+            <Separator />
+
+            <div>
+              <Button variant="outline" className="w-full" onClick={() => setShowPasswordChange(!showPasswordChange)}>
+                <KeyRound className="mr-2 h-4 w-4" /> Change Password
+              </Button>
+            
+              {showPasswordChange && (
+                <form onSubmit={handleChangePassword} className="mt-4 space-y-4 p-4 border rounded-lg bg-background/50">
+                   <h3 className="font-semibold text-secondary">Change Admin Password</h3>
+                  <div className="space-y-2">
+                    <Label htmlFor="oldPassword">Old or Master Password</Label>
+                    <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required  className="bg-accent/50" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="bg-accent/50" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+                    <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} required className="bg-accent/50" />
+                  </div>
+                  <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground">
+                    <Save className="mr-2 h-4 w-4" /> Save New Password
+                  </Button>
+                </form>
+              )}
+            </div>
+          </CardContent>
+        </>
+      )
+    }
+
+    if (authView === 'forgot_password') {
+       return (
+          <form onSubmit={handleChangePassword}>
+            <CardHeader>
+              <CardTitle className="text-2xl font-headline text-primary">Reset Password</CardTitle>
+              <CardDescription>Reset your password using the master key.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="oldPassword">Master Password</Label>
+                <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required  className="bg-accent/50" />
+                 <p className="text-xs text-muted-foreground flex items-center gap-1.5"><AlertCircle className="h-3 w-3"/>The default master password is: <code className="font-mono bg-muted text-muted-foreground px-1 py-0.5 rounded">{masterPassword}</code></p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">New Admin Password</Label>
+                <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="bg-accent/50" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+                <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} required className="bg-accent/50" />
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col gap-4">
+              <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Save className="mr-2 h-4 w-4" /> Set New Password
+              </Button>
+              <Button variant="link" size="sm" onClick={() => { setAuthView('login'); setOldPassword(""); setNewPassword(""); setConfirmNewPassword(""); }}>
+                Back to Login
+              </Button>
+            </CardFooter>
+          </form>
+       )
+    }
+
+    return (
+       <form onSubmit={handleLogin}>
+        <CardHeader>
+          <CardTitle className="text-2xl font-headline text-primary">Admin Login</CardTitle>
+          <CardDescription>Access the administrative panel</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="admin" required className="pl-10 bg-accent/50" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+             <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="pl-10 bg-accent/50" />
+            </div>
+             <div className="flex justify-end pt-1">
+                <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setAuthView('forgot_password')}>
+                  Forgot Password?
+                </Button>
+             </div>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+            <LogIn className="mr-2 h-4 w-4" /> Login
+          </Button>
+        </CardFooter>
+      </form>
+    );
   }
 
   return (
@@ -229,92 +365,7 @@ export default function GoldenEyePage() {
             </div>
 
             <Card className="shadow-lg border-primary/20 bg-card/80 backdrop-blur-sm">
-              {!isLoggedIn ? (
-                <form onSubmit={handleLogin}>
-                  <CardHeader>
-                    <CardTitle className="text-2xl font-headline text-primary">Admin Login</CardTitle>
-                    <CardDescription>Access the administrative panel</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="username">Username</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="admin" required className="pl-10 bg-accent/50" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
-                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="pl-10 bg-accent/50" />
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                      <LogIn className="mr-2 h-4 w-4" /> Login
-                    </Button>
-                  </CardFooter>
-                </form>
-              ) : (
-                <>
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-2xl font-headline text-primary">Admin Panel</CardTitle>
-                      <Button variant="ghost" size="sm" onClick={handleLogout} className="hover:bg-accent">
-                        <LogOut className="mr-2 h-4 w-4" /> Logout
-                      </Button>
-                    </div>
-                    <CardDescription>Update price and manage settings</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <form onSubmit={handlePriceUpdate} className="space-y-4 p-4 border rounded-lg bg-background/50">
-                       <h3 className="font-semibold text-secondary">Update Gold Price</h3>
-                       <div className="space-y-2">
-                        <Label htmlFor="newPrice">New Price (per 10g)</Label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">₹</span>
-                          <Input id="newPrice" type="number" step="0.01" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} placeholder="e.g., 73000.00" required className="pl-8 bg-accent/50" />
-                        </div>
-                      </div>
-                      <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground">
-                        <Save className="mr-2 h-4 w-4" /> Update Price
-                      </Button>
-                    </form>
-
-                    <Separator />
-
-                    <div>
-                      <Button variant="outline" className="w-full" onClick={() => setShowPasswordChange(!showPasswordChange)}>
-                        <KeyRound className="mr-2 h-4 w-4" /> Change Password
-                      </Button>
-                    
-                      {showPasswordChange && (
-                        <form onSubmit={handleChangePassword} className="mt-4 space-y-4 p-4 border rounded-lg bg-background/50">
-                           <h3 className="font-semibold text-secondary">Change Admin Password</h3>
-                          <div className="space-y-2">
-                            <Label htmlFor="oldPassword">Old or Master Password</Label>
-                            <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required  className="bg-accent/50" />
-                            <p className="text-xs text-muted-foreground flex items-center gap-1.5"><AlertCircle className="h-3 w-3"/>Forgot password? Use master password: <code className="font-mono bg-muted text-muted-foreground px-1 py-0.5 rounded">{masterPassword}</code></p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="newPassword">New Password</Label>
-                            <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="bg-accent/50" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
-                            <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} required className="bg-accent/50" />
-                          </div>
-                          <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground">
-                            <Save className="mr-2 h-4 w-4" /> Save New Password
-                          </Button>
-                        </form>
-                      )}
-                    </div>
-                  </CardContent>
-                </>
-              )}
+              {renderAuthCard()}
             </Card>
           </div>
         </main>
