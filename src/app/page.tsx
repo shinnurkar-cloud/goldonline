@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Gem, Clock, User, Lock, LogIn, LogOut, Save, KeyRound, AlertCircle, ArrowUp, ArrowDown } from "lucide-react";
+import { Gem, Clock, User, Lock, LogIn, LogOut, Save, KeyRound, AlertCircle, ArrowUp, ArrowDown, Calculator } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -54,6 +54,8 @@ export default function GoldenEyePage() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [weight, setWeight] = useState("");
+  const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
   
   const [showPasswordChange, setShowPasswordChange] = useState(false);
 
@@ -152,6 +154,22 @@ export default function GoldenEyePage() {
       title: "Success",
       description: "Your password has been changed. Please log in.",
     });
+  };
+
+  const handleCalculate = (e: FormEvent) => {
+    e.preventDefault();
+    const weightValue = parseFloat(weight);
+    if (!isNaN(weightValue) && weightValue > 0) {
+      const pricePerGram = currentPrice / 10;
+      setCalculatedPrice(pricePerGram * weightValue);
+    } else {
+      setCalculatedPrice(null);
+      toast({
+        variant: "destructive",
+        title: "Invalid Weight",
+        description: "Please enter a valid positive number for weight.",
+      });
+    }
   };
   
   const currentPrice = priceHistory[0]?.price ?? 0;
@@ -320,6 +338,33 @@ export default function GoldenEyePage() {
                         <Clock className="h-4 w-4" />
                         <span>Last updated: {lastUpdated?.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</span>
                         </div>
+                    </CardContent>
+                </Card>
+                 <Card className="shadow-lg border-primary/20 bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <CardTitle className="text-xl font-headline text-primary">Gold Price Calculator</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <form onSubmit={handleCalculate} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="weight">Weight (in grams)</Label>
+                            <div className="relative">
+                                <Input id="weight" type="number" step="any" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="e.g., 25.5" required className="pr-12 bg-accent/50" />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">grams</span>
+                            </div>
+                        </div>
+                        <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground">
+                          <Calculator className="mr-2 h-4 w-4" /> Calculate
+                        </Button>
+                      </form>
+                      {calculatedPrice !== null && (
+                        <div className="mt-6 text-center">
+                          <p className="text-muted-foreground">Calculated Price:</p>
+                           <p className="text-3xl font-bold text-primary">
+                            {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 }).format(calculatedPrice)}
+                           </p>
+                        </div>
+                      )}
                     </CardContent>
                 </Card>
                 {recentUpdates.length > 1 && (
