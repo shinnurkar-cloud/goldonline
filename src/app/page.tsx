@@ -598,7 +598,7 @@ export default function GoldenEyePage() {
 
         <footer className="py-4 mt-8 border-t border-border">
             <div className="container mx-auto text-center text-sm text-muted-foreground">
-                <p>&copy; {new Date().getFullYear()} GoldenEye. All rights reserved.</p>
+                <p>&copy; {new Date().getFullYear()} Shinnurkar. All rights reserved.</p>
             </div>
         </footer>
       </div>
