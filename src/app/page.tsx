@@ -84,11 +84,11 @@ export default function GoldenEyePage() {
      // Initialize with placeholder images
     if (imageSlides.length === 0) {
       setImageSlides([
-        "https://picsum.photos/600/400?random=1",
-        "https://picsum.photos/600/400?random=2",
-        "https://picsum.photos/600/400?random=3",
-        "https://picsum.photos/600/400?random=4",
-        "https://picsum.photos/600/400?random=5",
+        "https://picsum.photos/600/400",
+        "https://picsum.photos/600/400",
+        "https://picsum.photos/600/400",
+        "https://picsum.photos/600/400",
+        "https://picsum.photos/600/400",
       ]);
     }
   }, []);
