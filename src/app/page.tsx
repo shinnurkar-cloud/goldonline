@@ -444,7 +444,7 @@ export default function GoldenEyePage() {
           <div className="container mx-auto flex items-center justify-center gap-3">
             <Gem className="h-8 w-8 text-primary" />
             <h1 className="text-4xl font-bold font-headline tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
-              GoldenEye
+              Kalaburagi Gold Price
             </h1>
           </div>
         </header>
@@ -565,5 +565,7 @@ export default function GoldenEyePage() {
   );
 }
 
+
+    
 
     
