@@ -1,6 +1,8 @@
+
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent, ChangeEvent } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Gem, Clock, User, Lock, LogIn, LogOut, Save, KeyRound, AlertCircle, ArrowUp, ArrowDown, Calculator } from "lucide-react";
+import { Gem, Clock, User, Lock, LogIn, LogOut, Save, KeyRound, AlertCircle, ArrowUp, ArrowDown, Calculator, Upload } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -23,6 +25,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 
 
 interface PriceUpdate {
@@ -40,10 +49,13 @@ export default function GoldenEyePage() {
 
   // Core app state
   const [priceHistory, setPriceHistory] = useState<PriceUpdate[]>([]);
+  const [imageSlides, setImageSlides] = useState<string[]>([]);
   
   // Admin state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedInAdmin2, setIsLoggedInAdmin2] = useState(false);
   const [adminPassword, setAdminPassword] = useState("password123");
+  const [admin2Password, setAdmin2Password] = useState("password456");
   const masterPassword = "gold123";
   const [authView, setAuthView] = useState<AuthView>('login');
 
@@ -67,6 +79,16 @@ export default function GoldenEyePage() {
     if (priceHistory.length === 0) {
         setPriceHistory([{ price: 72500.00, date: new Date() }]);
     }
+     // Initialize with placeholder images
+    if (imageSlides.length === 0) {
+      setImageSlides([
+        "https://picsum.photos/600/400?random=1",
+        "https://picsum.photos/600/400?random=2",
+        "https://picsum.photos/600/400?random=3",
+        "https://picsum.photos/600/400?random=4",
+        "https://picsum.photos/600/400?random=5",
+      ]);
+    }
   }, []);
 
   useEffect(() => {
@@ -88,6 +110,13 @@ export default function GoldenEyePage() {
         title: "Login Successful",
         description: "Welcome, Admin!",
       });
+    } else if (username === "admin2" && password === admin2Password) {
+      setIsLoggedInAdmin2(true);
+      setPassword("");
+      toast({
+        title: "Login Successful",
+        description: "Welcome, Admin2!",
+      });
     } else {
       toast({
         variant: "destructive",
@@ -99,6 +128,7 @@ export default function GoldenEyePage() {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setIsLoggedInAdmin2(false);
     setShowPasswordChange(false);
     setAuthView('login');
     toast({
@@ -129,7 +159,11 @@ export default function GoldenEyePage() {
 
   const handleChangePassword = (e: FormEvent) => {
     e.preventDefault();
-    if (oldPassword !== adminPassword && oldPassword !== masterPassword) {
+    
+    const targetAdmin = username === 'admin' || isLoggedIn ? 'admin' : 'admin2';
+    const currentPassword = targetAdmin === 'admin' ? adminPassword : admin2Password;
+
+    if (oldPassword !== currentPassword && oldPassword !== masterPassword) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -155,8 +189,18 @@ export default function GoldenEyePage() {
       });
       return;
     }
+    
+    if (isLoggedIn) {
+        setAdminPassword(newPassword);
+    } else if (isLoggedInAdmin2) {
+        setAdmin2Password(newPassword);
+    } else if (authView === 'forgot_password') {
+        // When resetting from forgot password, we need to know which admin to reset
+        // For simplicity, this will reset the main admin password
+        setAdminPassword(newPassword);
+    }
 
-    setAdminPassword(newPassword);
+
     setOldPassword("");
     setNewPassword("");
     setConfirmNewPassword("");
@@ -168,11 +212,61 @@ export default function GoldenEyePage() {
     });
   };
 
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const newSlides = [...imageSlides];
+        newSlides[index] = event.target?.result as string;
+        setImageSlides(newSlides);
+        toast({
+          title: `Image ${index + 1} Updated`,
+          description: "The new image has been uploaded to the slider.",
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const lastUpdated = priceHistory[0]?.date ?? null;
   const recentUpdates = priceHistory.slice(0, 6); // Get last 6 to show 5 changes
 
   if (!isMounted) {
     return null; // Or a loading skeleton
+  }
+
+  const renderAdmin2Panel = () => {
+    return (
+      <>
+        <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-2xl font-headline text-primary">Admin2 Panel</CardTitle>
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="hover:bg-accent">
+                <LogOut className="mr-2 h-4 w-4" /> Logout
+              </Button>
+            </div>
+            <CardDescription>Manage image slides</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+            <div className="space-y-4 p-4 border rounded-lg bg-background/50">
+                <h3 className="font-semibold text-secondary">Update Slider Images</h3>
+                {imageSlides.map((slide, index) => (
+                    <div key={index} className="space-y-2">
+                        <Label htmlFor={`image-upload-${index}`}>Slide {index + 1}</Label>
+                        <Input 
+                            id={`image-upload-${index}`} 
+                            type="file" 
+                            accept="image/*"
+                            onChange={(e) => handleImageUpload(e, index)}
+                            className="bg-accent/50 file:text-foreground"
+                        />
+                    </div>
+                ))}
+            </div>
+        </CardContent>
+      </>
+    )
   }
 
   const renderAuthCard = () => {
@@ -235,13 +329,17 @@ export default function GoldenEyePage() {
         </>
       )
     }
+    
+    if (isLoggedInAdmin2) {
+      return renderAdmin2Panel();
+    }
 
     if (authView === 'forgot_password') {
        return (
           <form onSubmit={handleChangePassword}>
             <CardHeader>
               <CardTitle className="text-2xl font-headline text-primary">Reset Password</CardTitle>
-              <CardDescription>Reset your password using the master key.</CardDescription>
+              <CardDescription>Reset admin password using the master key.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -274,14 +372,14 @@ export default function GoldenEyePage() {
        <form onSubmit={handleLogin}>
         <CardHeader>
           <CardTitle className="text-2xl font-headline text-primary">Admin Login</CardTitle>
-          <CardDescription>Access the administrative panel</CardDescription>
+          <CardDescription>Access the administrative panel. Use 'admin' or 'admin2'.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="admin" required className="pl-10 bg-accent/50" />
+              <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="admin or admin2" required className="pl-10 bg-accent/50" />
             </div>
           </div>
           <div className="space-y-2">
@@ -320,6 +418,24 @@ export default function GoldenEyePage() {
         <main className="flex-grow container mx-auto p-4 md:p-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
             <div className="space-y-8">
+              {imageSlides.length > 0 && (
+                <Carousel className="w-full shadow-lg rounded-lg overflow-hidden border-primary/20">
+                  <CarouselContent>
+                    {imageSlides.map((src, index) => (
+                      <CarouselItem key={index}>
+                        <Card className="border-0 rounded-none">
+                          <CardContent className="flex aspect-[3/2] items-center justify-center p-0">
+                            <Image src={src} alt={`Slide ${index + 1}`} width={600} height={400} className="object-cover w-full h-full" data-ai-hint="gold jewellery" />
+                          </CardContent>
+                        </Card>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="left-4" />
+                  <CarouselNext className="right-4"/>
+                </Carousel>
+              )}
+
                 <Card className="shadow-lg border-primary/20 bg-card/80 backdrop-blur-sm">
                     <CardHeader>
                         <CardTitle className="text-2xl font-headline text-primary">Current Gold Price</CardTitle>
@@ -414,3 +530,6 @@ export default function GoldenEyePage() {
       </div>
   );
 }
+
+
+    
