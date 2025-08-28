@@ -159,10 +159,10 @@ export default function GoldenEyePage() {
 
   return (
       <div className="flex flex-col min-h-screen bg-background font-body text-foreground">
-        <header className="py-6">
+        <header className="py-6 border-b border-border">
           <div className="container mx-auto flex items-center justify-center gap-3">
-            <Gem className="h-8 w-8 text-yellow-500" />
-            <h1 className="text-4xl font-bold font-headline tracking-tight">
+            <Gem className="h-8 w-8 text-primary" />
+            <h1 className="text-4xl font-bold font-headline tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
               GoldenEye
             </h1>
           </div>
@@ -170,14 +170,14 @@ export default function GoldenEyePage() {
 
         <main className="flex-grow container mx-auto p-4 md:p-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            <div>
-                <Card className="shadow-lg border-yellow-500/20">
+            <div className="space-y-8">
+                <Card className="shadow-lg border-primary/20 bg-card/80 backdrop-blur-sm">
                     <CardHeader>
                         <CardTitle className="text-2xl font-headline text-primary">Current Gold Price</CardTitle>
                         <CardDescription>Price in Rupees per 10 grams</CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center justify-center gap-4 text-center">
-                        <p className="text-6xl font-bold text-gray-800" style={{color: 'hsl(var(--foreground))'}}>
+                        <p className="text-6xl font-bold">
                         {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 }).format(currentPrice)}
                         </p>
                         <div className="flex items-center gap-2 text-muted-foreground">
@@ -187,14 +187,14 @@ export default function GoldenEyePage() {
                     </CardContent>
                 </Card>
                 {recentUpdates.length > 1 && (
-                <Card className="mt-8 shadow-lg border-yellow-500/20">
+                <Card className="shadow-lg border-primary/20 bg-card/80 backdrop-blur-sm">
                     <CardHeader>
                         <CardTitle className="text-xl font-headline text-primary">Recent Price History</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <Table>
                             <TableHeader>
-                                <TableRow>
+                                <TableRow className="border-border">
                                     <TableHead>Date</TableHead>
                                     <TableHead className="text-right">Price</TableHead>
                                     <TableHead className="text-center">Change</TableHead>
@@ -206,8 +206,8 @@ export default function GoldenEyePage() {
                                     if (!prevUpdate) return null;
                                     const priceChange = update.price - prevUpdate.price;
                                     return (
-                                        <TableRow key={update.date.toISOString()}>
-                                            <TableCell className="text-xs">{update.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</TableCell>
+                                        <TableRow key={update.date.toISOString()} className="border-border">
+                                            <TableCell className="text-xs text-muted-foreground">{update.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</TableCell>
                                             <TableCell className="text-right font-medium">{new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(update.price)}</TableCell>
                                             <TableCell className="flex justify-center items-center">
                                                 {priceChange > 0 ? (
@@ -228,7 +228,7 @@ export default function GoldenEyePage() {
                 )}
             </div>
 
-            <Card className="shadow-lg border-yellow-500/20">
+            <Card className="shadow-lg border-primary/20 bg-card/80 backdrop-blur-sm">
               {!isLoggedIn ? (
                 <form onSubmit={handleLogin}>
                   <CardHeader>
@@ -240,19 +240,19 @@ export default function GoldenEyePage() {
                       <Label htmlFor="username">Username</Label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="admin" required className="pl-10" />
+                        <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="admin" required className="pl-10 bg-accent/50" />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password">Password</Label>
                        <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="pl-10" />
+                        <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="pl-10 bg-accent/50" />
                       </div>
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Button type="submit" className="w-full">
+                    <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
                       <LogIn className="mr-2 h-4 w-4" /> Login
                     </Button>
                   </CardFooter>
@@ -262,7 +262,7 @@ export default function GoldenEyePage() {
                   <CardHeader>
                     <div className="flex justify-between items-center">
                       <CardTitle className="text-2xl font-headline text-primary">Admin Panel</CardTitle>
-                      <Button variant="ghost" size="sm" onClick={handleLogout}>
+                      <Button variant="ghost" size="sm" onClick={handleLogout} className="hover:bg-accent">
                         <LogOut className="mr-2 h-4 w-4" /> Logout
                       </Button>
                     </div>
@@ -270,15 +270,15 @@ export default function GoldenEyePage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <form onSubmit={handlePriceUpdate} className="space-y-4 p-4 border rounded-lg bg-background/50">
-                       <h3 className="font-semibold">Update Gold Price</h3>
+                       <h3 className="font-semibold text-secondary">Update Gold Price</h3>
                        <div className="space-y-2">
                         <Label htmlFor="newPrice">New Price (per 10g)</Label>
                         <div className="relative">
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">₹</span>
-                          <Input id="newPrice" type="number" step="0.01" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} placeholder="e.g., 73000.00" required className="pl-8" />
+                          <Input id="newPrice" type="number" step="0.01" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} placeholder="e.g., 73000.00" required className="pl-8 bg-accent/50" />
                         </div>
                       </div>
-                      <Button type="submit" className="w-full">
+                      <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground">
                         <Save className="mr-2 h-4 w-4" /> Update Price
                       </Button>
                     </form>
@@ -292,21 +292,21 @@ export default function GoldenEyePage() {
                     
                       {showPasswordChange && (
                         <form onSubmit={handleChangePassword} className="mt-4 space-y-4 p-4 border rounded-lg bg-background/50">
-                           <h3 className="font-semibold">Change Admin Password</h3>
+                           <h3 className="font-semibold text-secondary">Change Admin Password</h3>
                           <div className="space-y-2">
                             <Label htmlFor="oldPassword">Old Password</Label>
-                            <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required />
-                            <p className="text-xs text-muted-foreground flex items-center gap-1.5"><AlertCircle className="h-3 w-3"/>Forgot password? Use master password: <code className="font-mono bg-muted px-1 py-0.5 rounded">{masterPassword}</code></p>
+                            <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required  className="bg-accent/50" />
+                            <p className="text-xs text-muted-foreground flex items-center gap-1.5"><AlertCircle className="h-3 w-3"/>Forgot password? Use master password: <code className="font-mono bg-muted text-muted-foreground px-1 py-0.5 rounded">{masterPassword}</code></p>
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="newPassword">New Password</Label>
-                            <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
+                            <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="bg-accent/50" />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
-                            <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} required />
+                            <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} required className="bg-accent/50" />
                           </div>
-                          <Button type="submit" className="w-full">
+                          <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground">
                             <Save className="mr-2 h-4 w-4" /> Save New Password
                           </Button>
                         </form>
@@ -319,7 +319,7 @@ export default function GoldenEyePage() {
           </div>
         </main>
 
-        <footer className="py-4 mt-8">
+        <footer className="py-4 mt-8 border-t border-border">
             <div className="container mx-auto text-center text-sm text-muted-foreground">
                 <p>&copy; {new Date().getFullYear()} GoldenEye. All rights reserved.</p>
             </div>
