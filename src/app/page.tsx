@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Gem, Clock, User, Lock, LogIn, LogOut, Save, KeyRound, AlertCircle, ArrowUp, ArrowDown, Calculator, Upload } from "lucide-react";
+import { Gem, Clock, User, Lock, LogIn, LogOut, Save, KeyRound, AlertCircle, ArrowUp, ArrowDown, Calculator, Upload, MessageSquare } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -32,6 +32,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
+import { Textarea } from "@/components/ui/textarea";
 
 
 interface PriceUpdate {
@@ -50,7 +51,8 @@ export default function GoldenEyePage() {
   // Core app state
   const [priceHistory, setPriceHistory] = useState<PriceUpdate[]>([]);
   const [imageSlides, setImageSlides] = useState<string[]>([]);
-  
+  const [marqueeMessage, setMarqueeMessage] = useState("Welcome to Kalaburagi Gold Price! Your trusted source for live rates.");
+
   // Admin state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoggedInAdmin2, setIsLoggedInAdmin2] = useState(false);
@@ -63,12 +65,13 @@ export default function GoldenEyePage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [newPrice, setNewPrice] = useState("");
+  const [newMarqueeMessage, setNewMarqueeMessage] = useState(marqueeMessage);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [weight, setWeight] = useState("");
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
-  
+
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [forgotPasswordUsername, setForgotPasswordUsername] = useState("");
 
@@ -159,9 +162,18 @@ export default function GoldenEyePage() {
     }
   };
 
+   const handleMarqueeUpdate = (e: FormEvent) => {
+    e.preventDefault();
+    setMarqueeMessage(newMarqueeMessage);
+    toast({
+      title: "Marquee Updated",
+      description: "The scrolling message has been changed.",
+    });
+  };
+
   const handleChangePassword = (e: FormEvent) => {
     e.preventDefault();
-    
+
     // Determine which admin we're dealing with
     const activeAdmin = isLoggedIn ? 'admin' : (isLoggedInAdmin2 ? 'admin2' : forgotPasswordUsername);
     const currentPassword = activeAdmin === 'admin' ? adminPassword : admin2Password;
@@ -184,7 +196,7 @@ export default function GoldenEyePage() {
       });
       return;
     }
-    
+
     if (newPassword !== confirmNewPassword) {
       toast({
         variant: "destructive",
@@ -193,7 +205,7 @@ export default function GoldenEyePage() {
       });
       return;
     }
-    
+
     setPasswordFunc(newPassword);
 
     setOldPassword("");
@@ -256,9 +268,9 @@ export default function GoldenEyePage() {
                 {imageSlides.map((slide, index) => (
                     <div key={index} className="space-y-2">
                         <Label htmlFor={`image-upload-${index}`}>Slide {index + 1}</Label>
-                        <Input 
-                            id={`image-upload-${index}`} 
-                            type="file" 
+                        <Input
+                            id={`image-upload-${index}`}
+                            type="file"
                             accept="image/*"
                             onChange={(e) => handleImageUpload(e, index)}
                             className="bg-accent/50 file:text-foreground"
@@ -272,7 +284,7 @@ export default function GoldenEyePage() {
               <Button variant="outline" className="w-full" onClick={() => setShowPasswordChange(!showPasswordChange)}>
                 <KeyRound className="mr-2 h-4 w-4" /> Change Password
               </Button>
-            
+
               {showPasswordChange && (
                 <form onSubmit={handleChangePassword} className="mt-4 space-y-4 p-4 border rounded-lg bg-background/50">
                    <h3 className="font-semibold text-secondary">Change Admin2 Password</h3>
@@ -310,7 +322,7 @@ export default function GoldenEyePage() {
                 <LogOut className="mr-2 h-4 w-4" /> Logout
               </Button>
             </div>
-            <CardDescription>Update price and manage settings</CardDescription>
+            <CardDescription>Update price, message and manage settings</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <form onSubmit={handlePriceUpdate} className="space-y-4 p-4 border rounded-lg bg-background/50">
@@ -329,11 +341,31 @@ export default function GoldenEyePage() {
 
             <Separator />
 
+             <form onSubmit={handleMarqueeUpdate} className="space-y-4 p-4 border rounded-lg bg-background/50">
+                <h3 className="font-semibold text-secondary">Update Marquee Message</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="marqueeMessage">Scrolling Message</Label>
+                  <Textarea 
+                    id="marqueeMessage" 
+                    value={newMarqueeMessage} 
+                    onChange={(e) => setNewMarqueeMessage(e.target.value)} 
+                    placeholder="Enter new scrolling message..." 
+                    required 
+                    className="bg-accent/50"
+                  />
+                </div>
+                <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground">
+                  <MessageSquare className="mr-2 h-4 w-4" /> Update Message
+                </Button>
+              </form>
+
+            <Separator />
+
             <div>
               <Button variant="outline" className="w-full" onClick={() => setShowPasswordChange(!showPasswordChange)}>
                 <KeyRound className="mr-2 h-4 w-4" /> Change Password
               </Button>
-            
+
               {showPasswordChange && (
                 <form onSubmit={handleChangePassword} className="mt-4 space-y-4 p-4 border rounded-lg bg-background/50">
                    <h3 className="font-semibold text-secondary">Change Admin Password</h3>
@@ -359,7 +391,7 @@ export default function GoldenEyePage() {
         </>
       )
     }
-    
+
     if (isLoggedInAdmin2) {
       return renderAdmin2Panel();
     }
@@ -448,6 +480,14 @@ export default function GoldenEyePage() {
             </h1>
           </div>
         </header>
+
+         {marqueeMessage && (
+          <div className="bg-secondary text-secondary-foreground overflow-hidden">
+              <div className="w-full py-2">
+                  <p className="whitespace-nowrap animate-marquee">{marqueeMessage}</p>
+              </div>
+          </div>
+        )}
 
         <main className="flex-grow container mx-auto p-4 md:p-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
@@ -564,8 +604,5 @@ export default function GoldenEyePage() {
       </div>
   );
 }
-
-
-    
 
     
