@@ -14,7 +14,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Gem, Clock, User, Lock, LogIn, LogOut, Save, KeyRound, AlertCircle } from "lucide-react";
+import { Gem, Clock, User, Lock, LogIn, LogOut, Save, KeyRound, AlertCircle, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+
+
+interface PriceUpdate {
+  price: number;
+  date: Date;
+}
 
 export default function GoldenEyePage() {
   const { toast } = useToast();
@@ -23,9 +37,8 @@ export default function GoldenEyePage() {
   const [isMounted, setIsMounted] = useState(false);
 
   // Core app state
-  const [goldPrice, setGoldPrice] = useState(72500.00);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
+  const [priceHistory, setPriceHistory] = useState<PriceUpdate[]>([]);
+  
   // Admin state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [adminPassword, setAdminPassword] = useState("password123");
@@ -43,7 +56,10 @@ export default function GoldenEyePage() {
 
   useEffect(() => {
     setIsMounted(true);
-    setLastUpdated(new Date());
+    // Initialize with a starting price if history is empty
+    if (priceHistory.length === 0) {
+        setPriceHistory([{ price: 72500.00, date: new Date() }]);
+    }
   }, []);
 
   const handleLogin = (e: FormEvent) => {
@@ -77,8 +93,8 @@ export default function GoldenEyePage() {
     e.preventDefault();
     const priceValue = parseFloat(newPrice);
     if (!isNaN(priceValue) && priceValue > 0) {
-      setGoldPrice(priceValue);
-      setLastUpdated(new Date());
+      const newUpdate: PriceUpdate = { price: priceValue, date: new Date() };
+      setPriceHistory(prevHistory => [newUpdate, ...prevHistory]);
       setNewPrice("");
       toast({
         title: "Price Updated",
@@ -133,6 +149,10 @@ export default function GoldenEyePage() {
     });
   };
 
+  const currentPrice = priceHistory[0]?.price ?? 0;
+  const lastUpdated = priceHistory[0]?.date ?? null;
+  const recentUpdates = priceHistory.slice(0, 6); // Get last 6 to show 5 changes
+
   if (!isMounted) {
     return null; // Or a loading skeleton
   }
@@ -150,21 +170,63 @@ export default function GoldenEyePage() {
 
         <main className="flex-grow container mx-auto p-4 md:p-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            <Card className="shadow-lg border-yellow-500/20">
-              <CardHeader>
-                <CardTitle className="text-2xl font-headline text-primary">Current Gold Price</CardTitle>
-                <CardDescription>Price in Rupees per 10 grams</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center justify-center gap-4 text-center">
-                <p className="text-6xl font-bold text-gray-800" style={{color: 'hsl(var(--foreground))'}}>
-                  {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 }).format(goldPrice)}
-                </p>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span>Last updated: {lastUpdated?.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</span>
-                </div>
-              </CardContent>
-            </Card>
+            <div>
+                <Card className="shadow-lg border-yellow-500/20">
+                    <CardHeader>
+                        <CardTitle className="text-2xl font-headline text-primary">Current Gold Price</CardTitle>
+                        <CardDescription>Price in Rupees per 10 grams</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-center justify-center gap-4 text-center">
+                        <p className="text-6xl font-bold text-gray-800" style={{color: 'hsl(var(--foreground))'}}>
+                        {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 }).format(currentPrice)}
+                        </p>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span>Last updated: {lastUpdated?.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                        </div>
+                    </CardContent>
+                </Card>
+                {recentUpdates.length > 1 && (
+                <Card className="mt-8 shadow-lg border-yellow-500/20">
+                    <CardHeader>
+                        <CardTitle className="text-xl font-headline text-primary">Recent Price History</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead className="text-right">Price</TableHead>
+                                    <TableHead className="text-center">Change</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {recentUpdates.slice(0, 5).map((update, index) => {
+                                    const prevUpdate = recentUpdates[index + 1];
+                                    if (!prevUpdate) return null;
+                                    const priceChange = update.price - prevUpdate.price;
+                                    return (
+                                        <TableRow key={update.date.toISOString()}>
+                                            <TableCell className="text-xs">{update.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</TableCell>
+                                            <TableCell className="text-right font-medium">{new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(update.price)}</TableCell>
+                                            <TableCell className="flex justify-center items-center">
+                                                {priceChange > 0 ? (
+                                                    <ArrowUp className="h-4 w-4 text-green-500" />
+                                                ) : priceChange < 0 ? (
+                                                    <ArrowDown className="h-4 w-4 text-red-500" />
+                                                ) : (
+                                                    <span className="h-4 w-4" />
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+                )}
+            </div>
 
             <Card className="shadow-lg border-yellow-500/20">
               {!isLoggedIn ? (
