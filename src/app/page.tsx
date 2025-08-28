@@ -59,6 +59,8 @@ export default function GoldenEyePage() {
   
   const [showPasswordChange, setShowPasswordChange] = useState(false);
 
+  const currentPrice = priceHistory[0]?.price ?? 0;
+
   useEffect(() => {
     setIsMounted(true);
     // Initialize with a starting price if history is empty
@@ -66,6 +68,16 @@ export default function GoldenEyePage() {
         setPriceHistory([{ price: 72500.00, date: new Date() }]);
     }
   }, []);
+
+  useEffect(() => {
+    const weightValue = parseFloat(weight);
+    if (!isNaN(weightValue) && weightValue > 0) {
+        const pricePerGram = currentPrice / 10;
+        setCalculatedPrice(pricePerGram * weightValue);
+    } else {
+        setCalculatedPrice(null);
+    }
+  }, [weight, currentPrice]);
 
   const handleLogin = (e: FormEvent) => {
     e.preventDefault();
@@ -156,23 +168,6 @@ export default function GoldenEyePage() {
     });
   };
 
-  const handleCalculate = (e: FormEvent) => {
-    e.preventDefault();
-    const weightValue = parseFloat(weight);
-    if (!isNaN(weightValue) && weightValue > 0) {
-      const pricePerGram = currentPrice / 10;
-      setCalculatedPrice(pricePerGram * weightValue);
-    } else {
-      setCalculatedPrice(null);
-      toast({
-        variant: "destructive",
-        title: "Invalid Weight",
-        description: "Please enter a valid positive number for weight.",
-      });
-    }
-  };
-  
-  const currentPrice = priceHistory[0]?.price ?? 0;
   const lastUpdated = priceHistory[0]?.date ?? null;
   const recentUpdates = priceHistory.slice(0, 6); // Get last 6 to show 5 changes
 
@@ -343,20 +338,16 @@ export default function GoldenEyePage() {
                  <Card className="shadow-lg border-primary/20 bg-card/80 backdrop-blur-sm">
                     <CardHeader>
                         <CardTitle className="text-xl font-headline text-primary">Gold Price Calculator</CardTitle>
+                        <CardDescription>Calculate price based on current rate</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <form onSubmit={handleCalculate} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="weight">Weight (in grams)</Label>
-                            <div className="relative">
-                                <Input id="weight" type="number" step="any" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="e.g., 25.5" required className="pr-12 bg-accent/50" />
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">grams</span>
-                            </div>
-                        </div>
-                        <Button type="submit" className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground">
-                          <Calculator className="mr-2 h-4 w-4" /> Calculate
-                        </Button>
-                      </form>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                          <Label htmlFor="weight">Weight (in grams)</Label>
+                          <div className="relative">
+                              <Input id="weight" type="number" step="any" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="e.g., 25.5" className="pr-12 bg-accent/50" />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">grams</span>
+                          </div>
+                      </div>
                       {calculatedPrice !== null && (
                         <div className="mt-6 text-center">
                           <p className="text-muted-foreground">Calculated Price:</p>
