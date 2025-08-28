@@ -294,7 +294,7 @@ export default function GoldenEyePage() {
                         <form onSubmit={handleChangePassword} className="mt-4 space-y-4 p-4 border rounded-lg bg-background/50">
                            <h3 className="font-semibold text-secondary">Change Admin Password</h3>
                           <div className="space-y-2">
-                            <Label htmlFor="oldPassword">Old Password</Label>
+                            <Label htmlFor="oldPassword">Old or Master Password</Label>
                             <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required  className="bg-accent/50" />
                             <p className="text-xs text-muted-foreground flex items-center gap-1.5"><AlertCircle className="h-3 w-3"/>Forgot password? Use master password: <code className="font-mono bg-muted text-muted-foreground px-1 py-0.5 rounded">{masterPassword}</code></p>
                           </div>
